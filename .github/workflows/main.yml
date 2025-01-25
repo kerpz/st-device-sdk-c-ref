@@ -19,7 +19,9 @@ jobs:
 
     - name: Setup
       run:  python setup.py esp32
-    - name: Clean
-      run:  python build.py esp32 switch_example clean
+    - name: Isntall Toolchain
+      run:  cd bsp/esp32; ./install.sh; cd ../..
+    #- name: Clean
+    # run:  python build.py esp32 switch_example clean
     - name: Build
       run:  python build.py esp32 switch_example
