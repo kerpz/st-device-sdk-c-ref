@@ -19,3 +19,5 @@ jobs:
 
     - name: Setup
       run:  python setup.py esp32
+    - name: Build
+      run:  python build.py esp32 switch_example
