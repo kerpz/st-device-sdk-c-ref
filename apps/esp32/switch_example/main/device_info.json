@@ -1,8 +1,8 @@
 {
 	"deviceInfo": {
-		"firmwareVersion": "firmwareVersion_here",
-		"privateKey": "privateKey_here",
-		"publicKey": "publicKey_here",
-		"serialNumber": "serialNumber_here"
+		"firmwareVersion": "2025-01-24.1",
+		"privateKey": "3KQwAwRwWGibyajfzY4AuPGcUnqJFs3gW6zKKjYFoRA=",
+		"publicKey": "IFD4FBmf+HT8XRSmHyfV4DGzkRoJDNWgOPF63S6pWkc=",
+		"serialNumber": "STDKtVLPJPEpq3mc"
 	}
 }

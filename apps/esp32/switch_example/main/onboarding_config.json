@@ -1,21 +1,19 @@
 {
   "onboardingConfig": {
-    "deviceOnboardingId": "NAME",
-    "mnId": "MNID",
-    "setupId": "999",
-    "vid": "VID",
-    "deviceTypeId": "TYPE",
+    "deviceOnboardingId": "Testing",
+    "mnId": "fS1h",
+    "setupId": "001",
+    "vid": "ST_052587a7-dc3a-491b-b633-ecf75797efaf",
+    "deviceTypeId": "Switch",
     "ownershipValidationTypes": [
-      "JUSTWORKS",
-      "BUTTON",
-      "PIN",
-      "QR"
+      "BUTTON"
     ],
     "identityType": "ED25519",
     "deviceIntegrationProfileKey": {
-      "id": "DIP_UUID",
+      "id": "441b6829-fd1e-440a-aa3f-0c9f6b8fa43e",
       "majorVersion": 0,
       "minorVersion": 1
-    }
+    },
+    "productId": "986e0505-6f91-4e79-8fdb-92b7c3042b47"
   }
 }
