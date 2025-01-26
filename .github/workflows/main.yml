@@ -11,14 +11,14 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Setup
+    - name: Setup for esp32
       run:  ./setup.sh esp32
-    - name: Build
+    - name: Build switch_example
       run:  ./build.sh esp32 switch_example
 
-    #- name: Store Artifacts
-    #  uses: actions/upload-artifact@v2
-    #  with:
-    #    name: ufo-esp32.bin 
-    #    path: |
-    #      build/ufo-esp32.bin
+    - name: Upload switch_example
+      uses: actions/upload-artifact@v2
+      with:
+        name: switch_example.bin 
+        path: |
+          build/ufo-switch_example.bin
