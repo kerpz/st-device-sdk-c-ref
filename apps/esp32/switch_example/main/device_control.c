@@ -20,6 +20,7 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
+#include "rom/ets_sys.h"
 
 #include "device_control.h"
 
@@ -188,3 +189,99 @@ void iot_gpio_init(void)
     gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
     gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
 }
+
+static float temperature = 0;
+static float humidity = 0;
+
+void dht_read(void)
+{
+    int counter = 0;
+    int laststate = 1;
+    int i = 0;
+    int j = 0;
+    int checksum = 0;
+    int data[5] = {0};
+    // data[0] = data[1] = data[2] = data[3] = data[4] = 0;
+
+    gpio_set_direction(GPIO_DHT11, GPIO_MODE_OUTPUT);
+    // Wake up device, 250ms of high
+    // gpio_set_level(GPIO_DHT11, 1);
+    // ets_delay_us(250000);
+    // Hold low for 20ms
+    gpio_set_level(GPIO_DHT11, 0);
+    ets_delay_us(20000);
+    // High for 40ns
+    gpio_set_level(GPIO_DHT11, 1);
+    ets_delay_us(40);
+    // Set DHT_PIN pin as an input
+    gpio_set_direction(GPIO_DHT11, GPIO_MODE_INPUT);
+
+    // wait for pin to drop?
+    while (gpio_get_level(GPIO_DHT11) == 1 && i < DHT_MAXCOUNT)
+    {
+        ets_delay_us(1);
+        i++;
+    }
+
+    if (i == DHT_MAXCOUNT)
+    {
+        // reading.success = 0;
+        printf("Failed to get reading, dying\r\n");
+        // temperature = 0;
+        // humidity = 0;
+        return;
+    }
+
+    // read data
+    for (i = 0; i < DHT_MAXTIMINGS; i++)
+    {
+        // Count high time (in approx us)
+        counter = 0;
+        while (gpio_get_level(GPIO_DHT11) == laststate)
+        {
+            counter++;
+            ets_delay_us(1);
+            if (counter == 1000)
+                break;
+        }
+        laststate = gpio_get_level(GPIO_DHT11);
+        if (counter == 1000)
+            break;
+        // store data after 3 reads
+        if ((i > 3) && (i % 2 == 0))
+        {
+            // shove each bit into the storage bytes
+            data[j / 8] <<= 1;
+            if (counter > DHT_BREAKTIME)
+                data[j / 8] |= 1;
+            j++;
+        }
+    }
+
+    if (j >= 39)
+    {
+        // checksum = (data[0] + data[1] + data[2] + data[3]) & 0xFF;
+        checksum = (data[0] + data[1] + data[2] + data[3]);
+        // os_printf("DHT: %02x %02x %02x %02x [%02x] CS: %02x\r\n", data[0], data[1],data[2],data[3],data[4],checksum);
+        if (data[4] == checksum)
+        {
+            // checksum is valid
+            temperature = data[2];
+            humidity = data[0];
+            printf("Temperature =  %d *C, Humidity = %d %%\r\n", (int)temperature, (int)humidity);
+            // reading.success = 1;
+        }
+        else
+        {
+            printf("Checksum was incorrect after %d bits. Expected %d but got %d\r\n", j, data[4], checksum);
+            // reading.success = 0;
+        }
+    }
+    else
+    {
+        printf("Got too few bits: %d should be at least 40\r\n", j);
+        // reading.success = 0;
+    }
+    return;
+}
+// https://github.com/Anacron-sec/esp32-DHT11/blob/master/dht11.c

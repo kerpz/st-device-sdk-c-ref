@@ -281,7 +281,8 @@ static void iot_status_cb(iot_status_t status,
     case IOT_STATUS_IDLE:
     case IOT_STATUS_CONNECTING:
         noti_led_mode = LED_ANIMATION_MODE_IDLE;
-        change_switch_state(get_switch_state());
+        // change_switch_state(get_switch_state());
+        change_lock_state(get_lock_state());
         break;
     default:
         break;
@@ -428,6 +429,7 @@ static void app_main_task(void *arg)
             monitor_period_tick = pdMS_TO_TICKS(monitor_period_ms);
 
             /* emulate sensor value for example */
+            dht_read();
             cap_voltage_data->set_voltage_value(cap_voltage_data, 12.8);
             cap_voltage_data->attr_voltage_send(cap_voltage_data);
 

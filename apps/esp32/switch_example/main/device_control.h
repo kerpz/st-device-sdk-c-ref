@@ -51,11 +51,13 @@
 
 #define GPIO_INPUT_BUTTON 0
 
-#define GPIO_OUTPUT_MAINLED 12
+#define GPIO_OUTPUT_MAINLED 4
 #define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
 
 #define GPIO_OUTPUT_NOUSE1 14
 #define GPIO_OUTPUT_NOUSE2 27
+
+#define GPIO_DHT11 18
 
 #endif
 
@@ -101,3 +103,9 @@ int get_button_event(int *button_event_type, int *button_event_count);
 void led_blink(int switch_state, int delay, int count);
 void change_led_mode(int noti_led_mode);
 void iot_gpio_init(void);
+
+#define DHT_MAXTIMINGS 10000
+#define DHT_BREAKTIME 20
+#define DHT_MAXCOUNT 32000
+
+void dht_read(void);
