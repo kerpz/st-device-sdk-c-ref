@@ -28,7 +28,8 @@
 
 #include "iot_uart_cli.h"
 #include "iot_cli_cmd.h"
-#include "ota_util.h"
+#include "iot_ota.h"
+#include "iot_dht11.h"
 
 #include "caps_switch.h"
 #include "caps_lock.h"
@@ -65,6 +66,10 @@ TaskHandle_t ota_task_handle = NULL;
 
 int monitor_enable = true;
 int monitor_period_ms = 60000; // 1 minute
+
+float voltage = -1.0;
+float temperature = -1.0;
+float humidity = -1.0;
 
 static int get_switch_state(void)
 {
@@ -228,34 +233,27 @@ static void capability_init()
     cap_voltage_data = caps_voltageMeasurement_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_voltage_data)
     {
-        double voltage_init_value = -1.0;
-
         cap_voltage_data->set_voltage_unit(cap_voltage_data, "V");
-        cap_voltage_data->set_voltage_value(cap_voltage_data, voltage_init_value);
+        cap_voltage_data->set_voltage_value(cap_voltage_data, voltage);
     }
 
     cap_temperature_data = caps_temperatureMeasurement_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_temperature_data)
     {
-        double temperature_init_value = -1.0;
-
         cap_temperature_data->set_temperature_unit(cap_temperature_data, "C");
-        cap_temperature_data->set_temperature_value(cap_temperature_data, temperature_init_value);
+        cap_temperature_data->set_temperature_value(cap_temperature_data, temperature);
     }
 
     cap_humidity_data = caps_relativeHumidityMeasurement_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_humidity_data)
     {
-        double humidity_init_value = -1.0;
-
         // cap_humidity_data->set_temperature_unit(cap_humidity_data, "%%");
-        cap_humidity_data->set_humidity_value(cap_humidity_data, humidity_init_value);
+        cap_humidity_data->set_humidity_value(cap_humidity_data, humidity);
     }
 
     cap_ota_data = caps_firmwareUpdate_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_ota_data)
     {
-
         char *firmware_version = get_current_firmware_version();
 
         cap_ota_data->set_currentVersion_value(cap_ota_data, firmware_version);
@@ -429,14 +427,14 @@ static void app_main_task(void *arg)
             monitor_period_tick = pdMS_TO_TICKS(monitor_period_ms);
 
             /* emulate sensor value for example */
-            dht_read();
+            get_dht11_readings(&temperature, &humidity);
             cap_voltage_data->set_voltage_value(cap_voltage_data, 12.8);
             cap_voltage_data->attr_voltage_send(cap_voltage_data);
 
-            cap_temperature_data->set_temperature_value(cap_temperature_data, 28.0);
+            cap_temperature_data->set_temperature_value(cap_temperature_data, temperature);
             cap_temperature_data->attr_temperature_send(cap_temperature_data);
 
-            cap_humidity_data->set_humidity_value(cap_humidity_data, 40.0);
+            cap_humidity_data->set_humidity_value(cap_humidity_data, humidity);
             cap_humidity_data->attr_humidity_send(cap_humidity_data);
         }
 
