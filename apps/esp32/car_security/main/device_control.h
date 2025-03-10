@@ -1,7 +1,6 @@
 /* ***************************************************************************
  *
  * Copyright 2025 Samsung Electronics All Rights Reserved.
- * Author: Philip Bordado <p.bordado@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +14,7 @@
  * either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  *
+ * Author: Philip Bordado <p.bordado@samsung.com>
  ****************************************************************************/
 
 #define GPIO_INPUT_BUTTON 0
@@ -66,11 +66,11 @@ enum button_event_type
 
 void change_lock_state(int lock_state);
 
-void button_isr_handler(void *arg);
+// void button_isr_handler(void *arg);
 int get_button_event(int *button_event_type, int *button_event_count);
 
-void motion_isr_handler(void *arg);
-void door_isr_handler(void *arg);
+// void motion_isr_handler(void *arg);
+// void door_isr_handler(void *arg);
 
 void led_blink(int switch_state, int delay, int count);
 void change_led_mode(int noti_led_mode);

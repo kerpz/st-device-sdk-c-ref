@@ -1,7 +1,6 @@
 /* ***************************************************************************
  *
  * Copyright 2025 Samsung Electronics All Rights Reserved.
- * Author: Philip Bordado <p.bordado@samsung.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +14,17 @@
  * either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  *
+ * Author: Philip Bordado <p.bordado@samsung.com>
  ****************************************************************************/
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
-
-// #include "driver/adc.h"
-// #include "esp_adc_cal.h"
 
 #include "device_control.h"
 #include "iot_adc.h"
@@ -149,10 +150,30 @@ void change_led_mode(int noti_led_mode)
     }
 }
 
-// static esp_adc_cal_characteristics_t adc1_chars;
+static QueueHandle_t gpio_evt_queue = NULL;
+
+static void IRAM_ATTR gpio_isr_handler(void *arg)
+{
+    uint32_t gpio_num = (uint32_t)arg;
+    xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+}
+
+static void gpio_task_example(void *arg)
+{
+    uint32_t io_num;
+    for (;;)
+    {
+        if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
+        {
+            printf("GPIO[%" PRIu32 "] intr, val: %d\n", io_num, gpio_get_level(io_num));
+        }
+    }
+}
 
 void iot_gpio_init(void)
 {
+    adc_setup();
+
     gpio_config_t io_conf;
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
@@ -182,8 +203,8 @@ void iot_gpio_init(void)
     gpio_set_intr_type(GPIO_INPUT_BUTTON, GPIO_INTR_ANYEDGE);
 
     io_conf.pin_bit_mask = 1 << GPIO_INPUT_MOTION;
-    io_conf.pull_down_en = (BUTTON_GPIO_RELEASED == 0);
-    io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
     gpio_set_intr_type(GPIO_INPUT_MOTION, GPIO_INTR_ANYEDGE);
 
@@ -199,22 +220,17 @@ void iot_gpio_init(void)
     // gpio_pullup_dis(GPIO_INPUT_DOOR);
     // gpio_set_intr_type(GPIO_INPUT_DOOR, GPIO_INTR_POSEDGE);
 
+    // create a queue to handle gpio event from isr
+    gpio_evt_queue = xQueueCreate(1, sizeof(uint32_t));
+    // start gpio task
+    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+
     gpio_install_isr_service(0);
 
-    // gpio_isr_handler_add(GPIO_INPUT_DOOR, door_handler, (void *)GPIO_INPUT_DOOR);
+    gpio_isr_handler_add(GPIO_INPUT_DOOR, gpio_isr_handler, (void *)GPIO_INPUT_DOOR);
 
     gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
     gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
 
-    // adc1 gpio 36
-    // esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_DEFAULT, 0, &adc1_chars);
-
-    // adc1_config_width(ADC_WIDTH_BIT_DEFAULT);
-    // adc1_config_channel_atten(GPIO_INPUT_VOLTAGE, ADC_ATTEN_DB_11);
-
-    // read
-    // int adc_value = adc1_get_raw(GPIO_INPUT_VOLTAGE);
-    // uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_value, &adc1_chars);
-    // printf("Voltage: %d mV", voltage);
-    adc_setup();
+    printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 }

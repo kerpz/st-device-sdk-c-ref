@@ -1,3 +1,22 @@
+/* ***************************************************************************
+ *
+ * Copyright 2025 Samsung Electronics All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific
+ * language governing permissions and limitations under the License.
+ *
+ * Author: Philip Bordado <p.bordado@samsung.com>
+ ****************************************************************************/
+
 // #include "freertos/FreeRTOS.h"
 // #include "freertos/queue.h"
 // #include "freertos/task.h"
@@ -12,27 +31,27 @@
 
 #include "iot_adc.h"
 
-static adc_oneshot_unit_handle_t adc1_handle = NULL;
+static adc_oneshot_unit_handle_t adc_handle = NULL;
 static adc_cali_handle_t cali_handle = NULL;
 
 void adc_setup(void)
 {
     //-------------ADC1 Init---------------//
     adc_oneshot_unit_init_cfg_t init_config1 = {
-        .unit_id = ADC_UNIT_1,
+        .unit_id = ADC_TARGET,
     };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_handle));
 
     //-------------ADC1 Config---------------//
     adc_oneshot_chan_cfg_t config = {
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_0, &config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, ADC_CHANNEL, &config));
 
     //-------------ADC1 Calibration Init---------------//
     adc_cali_line_fitting_config_t cali_config = {
-        .unit_id = ADC_UNIT_1,
+        .unit_id = ADC_TARGET,
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
@@ -41,12 +60,12 @@ void adc_setup(void)
 
 int get_adc_readings(float *voltage)
 {
-    int adc1_read0;
+    int adc_value;
     int mv_output;
 
     // read
-    ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_0, &adc1_read0));
-    adc_cali_raw_to_voltage(cali_handle, adc1_read0, &mv_output);
+    ESP_ERROR_CHECK(adc_oneshot_read(adc_handle, ADC_CHANNEL, &adc_value));
+    adc_cali_raw_to_voltage(cali_handle, adc_value, &mv_output);
 
     *voltage = (float)mv_output / 1000.0;
     printf("mV = %d\r\n", mv_output);
