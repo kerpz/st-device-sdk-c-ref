@@ -18,13 +18,14 @@
  ****************************************************************************/
 
 #define GPIO_INPUT_BUTTON 0
-#define GPIO_INPUT_MOTION 23
+#define GPIO_INPUT_MOTION 14
 #define GPIO_INPUT_DOOR 18
+#define GPIO_INPUT_IR 23
 
 #define GPIO_OUTPUT_MAINLED 4
-#define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
+// #define GPIO_OUTPUT_MAINLED_0 26 /* use as ground */
 
-#define GPIO_OUTPUT_NOUSE1 14
+#define GPIO_OUTPUT_NOUSE1 26
 #define GPIO_OUTPUT_NOUSE2 27
 
 #define GPIO_OUTPUT_ALARM 5

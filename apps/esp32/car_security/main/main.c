@@ -194,7 +194,7 @@ static void capability_init()
     cap_lock_data = caps_lock_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_lock_data)
     {
-        const char *lock_init_value = caps_helper_lock.attr_lock.value_unknown;
+        const char *lock_init_value = caps_helper_lock.attr_lock.value_locked;
 
         cap_lock_data->cmd_lock_usr_cb = cap_lock_cmd_cb;
         cap_lock_data->cmd_unlock_usr_cb = cap_lock_cmd_cb;
@@ -207,6 +207,7 @@ static void capability_init()
     {
         cap_voltage_data->set_voltage_unit(cap_voltage_data, "V");
         cap_voltage_data->set_voltage_value(cap_voltage_data, voltage);
+        cap_voltage_data->attr_voltage_send(cap_voltage_data);
     }
 
     cap_temperature_data = caps_temperatureMeasurement_initialize(iot_ctx, "main", NULL, NULL);
@@ -214,6 +215,7 @@ static void capability_init()
     {
         cap_temperature_data->set_temperature_unit(cap_temperature_data, "C");
         cap_temperature_data->set_temperature_value(cap_temperature_data, temperature);
+        cap_temperature_data->attr_temperature_send(cap_temperature_data);
     }
 
     cap_humidity_data = caps_relativeHumidityMeasurement_initialize(iot_ctx, "main", NULL, NULL);
@@ -221,6 +223,7 @@ static void capability_init()
     {
         // cap_humidity_data->set_temperature_unit(cap_humidity_data, "%%");
         cap_humidity_data->set_humidity_value(cap_humidity_data, humidity);
+        cap_humidity_data->attr_humidity_send(cap_humidity_data);
     }
 
     cap_ota_data = caps_firmwareUpdate_initialize(iot_ctx, "main", NULL, NULL);
@@ -491,6 +494,8 @@ void app_main(void)
 
     int iot_err;
 
+    iot_gpio_init();
+
     // create a iot context
     iot_ctx = st_conn_init(onboarding_config, onboarding_config_len, device_info, device_info_len);
     if (iot_ctx != NULL)
@@ -507,7 +512,6 @@ void app_main(void)
     // create a handle to process capability and initialize capability info
     capability_init();
 
-    iot_gpio_init();
     register_iot_cli_cmd();
     uart_cli_main();
     xTaskCreate(app_main_task, "app_main_task", 4096, NULL, 10, NULL);
