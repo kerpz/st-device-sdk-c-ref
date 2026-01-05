@@ -27,6 +27,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "esp_wifi.h"
+
 #include "iot_uart_cli.h"
 #include "iot_cli_cmd.h"
 #include "iot_ota.h"
@@ -41,6 +43,7 @@
 #include "caps_motionSensor.h"
 #include "caps_alarm.h"
 #include "caps_contactSensor.h"
+#include "caps_signalStrength.h"
 
 // onboarding_config_start is null-terminated string
 extern const uint8_t onboarding_config_start[] asm("_binary_onboarding_config_json_start");
@@ -67,6 +70,7 @@ static caps_firmwareUpdate_data_t *cap_ota_data;
 static caps_motionSensor_data_t *cap_motion_data;
 static caps_alarm_data_t *cap_alarm_data;
 static caps_contactSensor_data_t *cap_door_data;
+static caps_signalStrength_data_t *cap_signalStrength_data;
 
 TaskHandle_t ota_task_handle = NULL;
 
@@ -250,6 +254,16 @@ static void capability_init()
         const char *door_init_value = "open";
         cap_door_data->set_contact_value(cap_door_data, door_init_value);
     }
+
+    cap_signalStrength_data = caps_signalStrength_initialize(iot_ctx, "main", NULL, NULL);
+    if (cap_signalStrength_data)
+    {
+        cap_signalStrength_data->set_rssi_unit(cap_signalStrength_data, "dBm");
+        cap_signalStrength_data->set_rssi_value(cap_signalStrength_data, -50.0);
+        cap_signalStrength_data->attr_rssi_send(cap_signalStrength_data);
+        cap_signalStrength_data->set_lqi_value(cap_signalStrength_data, 100);
+        cap_signalStrength_data->attr_lqi_send(cap_signalStrength_data);
+    }
 }
 
 static void iot_status_cb(iot_status_t status,
@@ -428,6 +442,17 @@ static void app_main_task(void *arg)
 
             cap_humidity_data->set_humidity_value(cap_humidity_data, humidity);
             cap_humidity_data->attr_humidity_send(cap_humidity_data);
+
+            // Update signal strength
+            if (cap_signalStrength_data)
+            {
+                wifi_ap_record_t ap_info;
+                if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
+                {
+                    cap_signalStrength_data->set_rssi_value(cap_signalStrength_data, ap_info.rssi);
+                    cap_signalStrength_data->attr_rssi_send(cap_signalStrength_data);
+                }
+            }
 
             cap_door_data->set_contact_value(cap_door_data, "closed");
             cap_door_data->attr_contact_send(cap_door_data);
