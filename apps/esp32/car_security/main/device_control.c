@@ -26,6 +26,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "driver/rmt.h"
+#include "driver/i2c.h"
 
 #include "device_control.h"
 #include "iot_adc.h"
@@ -44,6 +45,38 @@ static bool nec_repeat(rmt_item32_t *items, int item_count)
     if (item_count > 1 && (items[1].duration0 < 400 || items[1].duration0 > 700))
         return false;
     return true;
+}
+
+void i2c_scanner(void)
+{
+    printf("Scanning I2C bus for devices...\n");
+    printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
+    printf("00: ");
+
+    for (uint8_t addr = 0; addr < 128; addr++)
+    {
+        if (addr % 16 == 0 && addr != 0)
+        {
+            printf("\n%02x: ", addr);
+        }
+
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_stop(cmd);
+        esp_err_t ret = i2c_master_cmd_begin(I2C_NUM_0, cmd, pdMS_TO_TICKS(50));
+        i2c_cmd_link_delete(cmd);
+
+        if (ret == ESP_OK)
+        {
+            printf("%02x ", addr);
+        }
+        else
+        {
+            printf("-- ");
+        }
+    }
+    printf("\nI2C scan complete\n");
 }
 
 void change_lock_state(int lock_state)
@@ -450,6 +483,37 @@ void iot_gpio_init(void)
 
     gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
     // gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
+
+    // Initialize I2C
+    i2c_config_t conf = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = GPIO_I2C_SDA,
+        .scl_io_num = GPIO_I2C_SCL,
+        .sda_pullup_en = GPIO_PULLUP_ENABLE,
+        .scl_pullup_en = GPIO_PULLUP_ENABLE,
+        .master.clk_speed = 100000,
+    };
+    esp_err_t ret = i2c_param_config(I2C_NUM_0, &conf);
+    if (ret != ESP_OK)
+    {
+        printf("I2C param config failed: %d\n", ret);
+        return;
+    }
+
+    ret = i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
+    if (ret != ESP_OK)
+    {
+        printf("I2C driver install failed: %d\n", ret);
+        return;
+    }
+
+    printf("I2C driver installed successfully on SDA=%d, SCL=%d\n", GPIO_I2C_SDA, GPIO_I2C_SCL);
+
+    // Small delay to ensure I2C is stable
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // Scan I2C bus for devices
+    i2c_scanner();
 
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 }

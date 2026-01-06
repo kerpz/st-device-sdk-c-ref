@@ -30,6 +30,9 @@
 
 #define GPIO_OUTPUT_ALARM 5
 
+#define GPIO_I2C_SDA 21
+#define GPIO_I2C_SCL 22
+
 enum switch_onoff_state
 {
     SWITCH_OFF = 0,
