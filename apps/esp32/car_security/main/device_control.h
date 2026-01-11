@@ -17,6 +17,8 @@
  * Author: Philip Bordado <p.bordado@samsung.com>
  ****************************************************************************/
 
+// https://github.com/voidlooprobotech/ESP32_ESP-IDF_Code/tree/main/15_SSD1306_ESP32
+
 #define GPIO_INPUT_BUTTON 0
 #define GPIO_INPUT_MOTION 14
 #define GPIO_INPUT_DOOR 18
