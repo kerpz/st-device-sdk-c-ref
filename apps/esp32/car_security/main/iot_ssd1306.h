@@ -27,6 +27,25 @@ void ssd1306_clear(void);
  * @brief Set or clear a single pixel in framebuffer
  */
 void ssd1306_pixel(uint8_t x, uint8_t y, bool on);
+/**
+ * @brief Draw a single ASCII character
+ *
+ * @param x     X position (left)
+ * @param y     Y position (top)
+ * @param c     ASCII character
+ * @param on    true = draw, false = erase
+ */
+void ssd1306_char(uint8_t x, uint8_t y, char c, bool on);
+
+/**
+ * @brief Draw a null-terminated string
+ *
+ * @param x     X position
+ * @param y     Y position
+ * @param str   Text string
+ * @param on    true = draw, false = erase
+ */
+void ssd1306_text(uint8_t x, uint8_t y, const char *str, bool on);
 
 /**
  * @brief Flush framebuffer to OLED

@@ -274,7 +274,7 @@ void iot_gpio_init(void)
         .scl_io_num = GPIO_I2C_SCL,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master.clk_speed = 100000,
+        .master.clk_speed = 400000, // 100000,
     };
     esp_err_t ret = i2c_param_config(I2C_NUM_0, &conf);
     if (ret != ESP_OK)
@@ -303,8 +303,10 @@ void iot_gpio_init(void)
     ssd1306_clear();
 
     // Draw diagonal line
-    for (int i = 0; i < 64; i++)
-        ssd1306_pixel(i, i, true);
+    // for (int i = 0; i < 64; i++)
+    //    ssd1306_pixel(i, i, true);
+    ssd1306_text(0, 0, "HELLO WORLD", true);
+    ssd1306_text(0, 16, "ESP32 SSD1306", true);
 
     ssd1306_flush();
 
