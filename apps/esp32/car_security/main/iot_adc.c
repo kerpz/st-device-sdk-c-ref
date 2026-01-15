@@ -16,13 +16,6 @@
  *
  * Author: Philip Bordado <p.bordado@samsung.com>
  ****************************************************************************/
-
-// #include "freertos/FreeRTOS.h"
-// #include "freertos/queue.h"
-// #include "freertos/task.h"
-// #include "freertos/semphr.h"
-
-// #include "esp_adc/adc_continuous.h"
 #include "esp_adc/adc_oneshot.h"
 #include "hal/adc_types.h"
 
@@ -58,18 +51,24 @@ void adc_setup(void)
     ESP_ERROR_CHECK(adc_cali_create_scheme_line_fitting(&cali_config, &cali_handle));
 }
 
-int get_adc_readings(float *voltage)
+bool get_adc_readings(float *voltage)
 {
-    int adc_value;
-    int mv_output;
+    int adc_value = 0;
+    int mv_output = 0;
 
-    // read
-    ESP_ERROR_CHECK(adc_oneshot_read(adc_handle, ADC_CHANNEL, &adc_value));
+    // read ADC
+    esp_err_t ret = adc_oneshot_read(adc_handle, ADC_CHANNEL, &adc_value);
+    if (ret != ESP_OK)
+    {
+        printf("ADC read failed: %d\n", ret);
+        return false;
+    }
+
+    // convert raw value to voltage
     adc_cali_raw_to_voltage(cali_handle, adc_value, &mv_output);
 
-    *voltage = (float)mv_output / 1000.0;
-    printf("mV = %d\r\n", mv_output);
-    // printf("Voltage =  %.2f V\r\n", voltage);
+    *voltage = mv_output / 1000.0f;
+    printf("ADC raw = %d, Voltage = %.3f V\n", adc_value, *voltage);
 
     return true;
 }

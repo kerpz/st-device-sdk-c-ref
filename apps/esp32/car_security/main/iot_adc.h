@@ -19,11 +19,15 @@
 #ifndef _IOT_ADC_H_
 #define _IOT_ADC_H_
 
-/* GPIO36 */
-#define ADC_TARGET ADC_UNIT_1     // ADC1
-#define ADC_CHANNEL ADC_CHANNEL_0 // Channel 0
+#include "esp_adc/adc_oneshot.h"
+#include "hal/adc_types.h"
+#include <stdbool.h>
+
+/* Default ADC configuration for GPIO36 */
+#define DEFAULT_ADC_TARGET ADC_UNIT_1     // ADC1
+#define DEFAULT_ADC_CHANNEL ADC_CHANNEL_0 // Channel 0
 
 void adc_setup(void);
-int get_adc_readings(float *voltage);
+bool get_adc_readings(float *voltage);
 
 #endif /* _IOT_ADC_H_ */

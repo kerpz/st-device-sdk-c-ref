@@ -34,6 +34,7 @@
 #include "iot_ota.h"
 #include "iot_dht11.h"
 #include "iot_adc.h"
+#include "iot_ssd1306.h"
 
 #include "caps_lock.h"
 #include "caps_voltageMeasurement.h"
@@ -43,7 +44,7 @@
 #include "caps_motionSensor.h"
 #include "caps_alarm.h"
 #include "caps_contactSensor.h"
-#include "caps_signalStrength.h"
+// #include "caps_signalStrength.h"
 
 // onboarding_config_start is null-terminated string
 extern const uint8_t onboarding_config_start[] asm("_binary_onboarding_config_json_start");
@@ -70,7 +71,7 @@ static caps_firmwareUpdate_data_t *cap_ota_data;
 static caps_motionSensor_data_t *cap_motion_data;
 static caps_alarm_data_t *cap_alarm_data;
 static caps_contactSensor_data_t *cap_door_data;
-static caps_signalStrength_data_t *cap_signalStrength_data;
+// static caps_signalStrength_data_t *cap_signalStrength_data;
 
 TaskHandle_t ota_task_handle = NULL;
 
@@ -258,6 +259,7 @@ static void capability_init()
         cap_door_data->set_contact_value(cap_door_data, door_init_value);
     }
 
+    /*
     cap_signalStrength_data = caps_signalStrength_initialize(iot_ctx, "main", NULL, NULL);
     if (cap_signalStrength_data)
     {
@@ -267,6 +269,7 @@ static void capability_init()
         cap_signalStrength_data->set_lqi_value(cap_signalStrength_data, 100);
         cap_signalStrength_data->attr_lqi_send(cap_signalStrength_data);
     }
+    */
 }
 
 static void iot_status_cb(iot_status_t status,
@@ -418,6 +421,7 @@ static void app_main_task(void *arg)
 
     vTaskSetTimeOutState(&monitor_timeout);
 
+    char buf[16];
     for (;;)
     {
         if (get_button_event(&button_event_type, &button_event_count))
@@ -447,6 +451,7 @@ static void app_main_task(void *arg)
             cap_humidity_data->attr_humidity_send(cap_humidity_data);
 
             // Update signal strength
+            /*
             if (cap_signalStrength_data)
             {
                 wifi_ap_record_t ap_info;
@@ -456,9 +461,40 @@ static void app_main_task(void *arg)
                     cap_signalStrength_data->attr_rssi_send(cap_signalStrength_data);
                 }
             }
+            */
 
             cap_door_data->set_contact_value(cap_door_data, "closed");
             cap_door_data->attr_contact_send(cap_door_data);
+
+            // display
+            ssd1306_clear();
+            // ----- LEFT COLUMN -----
+            snprintf(buf, sizeof(buf), "T: %.1fC", temperature);
+            ssd1306_text(0, 0, buf, true);
+
+            int sig = 0;
+            wifi_ap_record_t ap_info;
+            if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK)
+            {
+                sig = ap_info.rssi;
+            }
+            snprintf(buf, sizeof(buf), "S: %ddBm", sig);
+            ssd1306_text(0, 16, buf, true);
+
+            // ----- RIGHT COLUMN -----
+            snprintf(buf, sizeof(buf), "H: %.0f%%", humidity);
+            ssd1306_text(72, 0, buf, true);
+
+            // float volt = get_voltage();
+            snprintf(buf, sizeof(buf), "V: %.2fV", voltage);
+            ssd1306_text(72, 16, buf, true);
+
+            // ----- BOTTOM ROW: timestamp -----
+            snprintf(buf, sizeof(buf), "UPDATED: %02d:%02d", 12, 3); // replace with RTC
+            ssd1306_text(0, 32, buf, true);
+
+            // Push framebuffer to OLED
+            ssd1306_flush();
         }
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
