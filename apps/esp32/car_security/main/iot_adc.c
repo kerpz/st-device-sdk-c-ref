@@ -31,7 +31,7 @@ void adc_setup(void)
 {
     //-------------ADC1 Init---------------//
     adc_oneshot_unit_init_cfg_t init_config1 = {
-        .unit_id = ADC_TARGET,
+        .unit_id = DEFAULT_ADC_TARGET,
     };
     ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc_handle));
 
@@ -40,11 +40,11 @@ void adc_setup(void)
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, ADC_CHANNEL, &config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, DEFAULT_ADC_CHANNEL, &config));
 
     //-------------ADC1 Calibration Init---------------//
     adc_cali_line_fitting_config_t cali_config = {
-        .unit_id = ADC_TARGET,
+        .unit_id = DEFAULT_ADC_TARGET,
         .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
@@ -57,7 +57,7 @@ bool get_adc_readings(float *voltage)
     int mv_output = 0;
 
     // read ADC
-    esp_err_t ret = adc_oneshot_read(adc_handle, ADC_CHANNEL, &adc_value);
+    esp_err_t ret = adc_oneshot_read(adc_handle, DEFAULT_ADC_CHANNEL, &adc_value);
     if (ret != ESP_OK)
     {
         printf("ADC read failed: %d\n", ret);

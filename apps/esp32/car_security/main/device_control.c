@@ -282,14 +282,12 @@ void iot_gpio_init(void)
         printf("I2C param config failed: %d\n", ret);
         return;
     }
-
     ret = i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0);
     if (ret != ESP_OK)
     {
         printf("I2C driver install failed: %d\n", ret);
         return;
     }
-
     printf("I2C driver installed successfully on SDA=%d, SCL=%d\n", GPIO_I2C_SDA, GPIO_I2C_SCL);
 
     // Small delay to ensure I2C is stable
