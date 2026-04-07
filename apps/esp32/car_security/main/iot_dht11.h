@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #ifndef GPIO_DHT11
-#define GPIO_DHT11 19
+#define GPIO_DHT11 23
 #endif
 
 typedef enum

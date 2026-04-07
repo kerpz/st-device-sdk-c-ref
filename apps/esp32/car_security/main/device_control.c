@@ -32,6 +32,7 @@
 #include "iot_adc.h"
 #include "iot_ir_nec.h"
 #include "iot_ssd1306.h"
+#include "iot_beep.h"
 
 void i2c_scanner(void)
 {
@@ -66,11 +67,11 @@ void change_lock_state(int lock_state)
 {
     if (lock_state == SWITCH_OFF)
     {
-        gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_OFF);
+        gpio_set_level(GPIO_LOCK, MAINLED_GPIO_OFF);
     }
     else
     {
-        gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
+        gpio_set_level(GPIO_LOCK, MAINLED_GPIO_ON);
     }
 }
 
@@ -84,12 +85,12 @@ int get_button_event(int *button_event_type, int *button_event_count)
 
     uint8_t gpio_level = 0;
 
-    gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
+    gpio_level = gpio_get_level(GPIO_BUTTON);
     if (button_last_state != gpio_level)
     {
         /* wait debounce time to ignore small ripple of currunt */
         vTaskDelay(pdMS_TO_TICKS(BUTTON_DEBOUNCE_TIME_MS));
-        gpio_level = gpio_get_level(GPIO_INPUT_BUTTON);
+        gpio_level = gpio_get_level(GPIO_BUTTON);
         if (button_last_state != gpio_level)
         {
             printf("Button event, val: %d, tick: %lu\n", gpio_level, (uint32_t)xTaskGetTickCount());
@@ -213,47 +214,47 @@ void iot_gpio_init(void)
 
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
-
-    io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED;
+    io_conf.pin_bit_mask = 1 << GPIO_LOCK;
     io_conf.pull_down_en = 1;
     io_conf.pull_up_en = 0;
     gpio_config(&io_conf);
 
     // io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_MAINLED_0;
     // gpio_config(&io_conf);
-    io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE1;
-    gpio_config(&io_conf);
-    io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE2;
-    gpio_config(&io_conf);
-    io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_ALARM;
-    gpio_config(&io_conf);
+    // io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE1;
+    // gpio_config(&io_conf);
+    // io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_NOUSE2;
+    // gpio_config(&io_conf);
+    // io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_ALARM;
+    // gpio_config(&io_conf);
 
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
-
-    io_conf.pin_bit_mask = 1 << GPIO_INPUT_BUTTON;
+    io_conf.pin_bit_mask = 1 << GPIO_BUTTON;
     io_conf.pull_down_en = (BUTTON_GPIO_RELEASED == 0);
     io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
     gpio_config(&io_conf);
-    gpio_set_intr_type(GPIO_INPUT_BUTTON, GPIO_INTR_ANYEDGE);
+    // gpio_set_intr_type(GPIO_BUTTON, GPIO_INTR_ANYEDGE);
 
-    io_conf.pin_bit_mask = 1 << GPIO_INPUT_MOTION;
-    io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 1;
+    // io_conf.pin_bit_mask = 1 << GPIO_INPUT_MOTION;
+    // io_conf.pull_down_en = 0;
+    // io_conf.pull_up_en = 1;
+    // gpio_config(&io_conf);
+    // gpio_set_intr_type(GPIO_INPUT_MOTION, GPIO_INTR_ANYEDGE);
+
+    io_conf.intr_type = GPIO_INTR_NEGEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1 << GPIO_DOOR;
+    io_conf.pull_down_en = 1;
+    io_conf.pull_up_en = 0;
     gpio_config(&io_conf);
-    gpio_set_intr_type(GPIO_INPUT_MOTION, GPIO_INTR_ANYEDGE);
+    // gpio_set_intr_type(GPIO_DOOR, GPIO_INTR_NEGEDGE);
 
-    io_conf.pin_bit_mask = 1 << GPIO_INPUT_DOOR;
-    io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 1;
-    gpio_config(&io_conf);
-    gpio_set_intr_type(GPIO_INPUT_DOOR, GPIO_INTR_NEGEDGE);
-
-    // gpio_pad_select_gpio(GPIO_INPUT_DOOR);
-    // gpio_set_direction(GPIO_INPUT_DOOR, GPIO_MODE_INPUT);
-    // gpio_pulldown_en(GPIO_INPUT_DOOR);
-    // gpio_pullup_dis(GPIO_INPUT_DOOR);
-    // gpio_set_intr_type(GPIO_INPUT_DOOR, GPIO_INTR_POSEDGE);
+    // gpio_pad_select_gpio(GPIO_DOOR);
+    // gpio_set_direction(GPIO_DOOR, GPIO_MODE_INPUT);
+    // gpio_pulldown_en(GPIO_DOOR);
+    // gpio_pullup_dis(GPIO_DOOR);
+    // gpio_set_intr_type(GPIO_DOOR, GPIO_INTR_POSEDGE);
 
     // create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(1, sizeof(uint32_t));
@@ -262,9 +263,9 @@ void iot_gpio_init(void)
 
     gpio_install_isr_service(0);
 
-    gpio_isr_handler_add(GPIO_INPUT_DOOR, gpio_isr_handler, (void *)GPIO_INPUT_DOOR);
+    gpio_isr_handler_add(GPIO_DOOR, gpio_isr_handler, (void *)GPIO_DOOR);
 
-    gpio_set_level(GPIO_OUTPUT_MAINLED, MAINLED_GPIO_ON);
+    gpio_set_level(GPIO_LOCK, 1);
     // gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
 
     // Initialize I2C
@@ -307,6 +308,12 @@ void iot_gpio_init(void)
     ssd1306_text(0, 16, "ESP32 SSD1306", true);
 
     ssd1306_flush();
+
+    beep_setup();
+    set_volume(700); // louder
+    // start_alarm();
+    // vTaskDelay(pdMS_TO_TICKS(15000));
+    // stop_alarm();
 
     printf("Minimum free heap size: %" PRIu32 " bytes\n", esp_get_minimum_free_heap_size());
 }

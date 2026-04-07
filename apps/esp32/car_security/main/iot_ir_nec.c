@@ -224,7 +224,7 @@ void rmt_ir_rx_init()
   rmt_config_t rmt_rx_config = {
       .rmt_mode = RMT_MODE_RX,
       .channel = RMT_CHANNEL_0,
-      .gpio_num = GPIO_INPUT_IR,
+      .gpio_num = GPIO_IR_RX,
       .mem_block_num = 1,
       .clk_div = 80, // 1MHz
       .rx_config.filter_en = true,

@@ -35,6 +35,7 @@
 #include "iot_dht11.h"
 #include "iot_adc.h"
 #include "iot_ssd1306.h"
+#include "iot_beep.h"
 
 #include "caps_lock.h"
 #include "caps_voltageMeasurement.h"
@@ -107,6 +108,17 @@ static void cap_lock_cmd_cb(struct caps_lock_data *caps_data)
 {
     int lock_state = get_lock_state();
     change_lock_state(lock_state);
+}
+
+static void cap_alarm_siren_cmd_cb(struct caps_alarm_data *caps_data)
+{
+    // Handle alarm command callback
+    start_alarm();
+}
+static void cap_alarm_off_cmd_cb(struct caps_alarm_data *caps_data)
+{
+    // Handle alarm command callback
+    stop_alarm();
 }
 
 static char *get_current_firmware_version(void)
@@ -250,6 +262,8 @@ static void capability_init()
     {
         const char *alarm_init_value = "off";
         cap_alarm_data->set_alarm_value(cap_alarm_data, alarm_init_value);
+        cap_alarm_data->cmd_siren_usr_cb = cap_alarm_siren_cmd_cb;
+        cap_alarm_data->cmd_off_usr_cb = cap_alarm_off_cmd_cb;
     }
 
     cap_door_data = caps_contactSensor_initialize(iot_ctx, "main", NULL, NULL);

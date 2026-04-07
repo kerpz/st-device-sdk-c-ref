@@ -1,3 +1,5 @@
+#ifndef IOT_BEEP_H
+#define IOT_BEEP_H
 /* ***************************************************************************
  *
  * Copyright 2025 Samsung Electronics All Rights Reserved.
@@ -16,12 +18,33 @@
  *
  * Author: Philip Bordado <p.bordado@samsung.com>
  ****************************************************************************/
-#ifndef _IOT_IR_NEC_H_
-#define _IOT_IR_NEC_H_
+#include <stdint.h>
+#include <stdbool.h>
 
-#define GPIO_IR_RX 18
-#define GPIO_IR_TX 19
+// ================= CONFIG =================
+#ifndef GPIO_BUZZER
+#define GPIO_BUZZER 25
+#endif
 
-void rmt_ir_rx_init(void);
+#define LEDC_TIMER LEDC_TIMER_0
+#define LEDC_MODE LEDC_LOW_SPEED_MODE
+#define LEDC_CHANNEL LEDC_CHANNEL_0
+#define LEDC_DUTY_RES LEDC_TIMER_10_BIT
 
-#endif /* _IOT_IR_NEC_H_ */
+void beep_setup(void);
+
+// Control
+void start_alarm(void);
+void stop_alarm(void);
+
+// Optional controls
+void set_volume(uint32_t vol);
+
+// Modes (optional direct use)
+void siren_wail(void);
+void siren_yelp(void);
+void siren_hilo(void);
+void siren_phaser(void);
+void siren_airhorn(void);
+
+#endif

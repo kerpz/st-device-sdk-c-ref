@@ -16,30 +16,30 @@
  *
  * Author: Philip Bordado <p.bordado@samsung.com>
  ****************************************************************************/
-#define GPIO_INPUT_BUTTON 0 // BOOT button
+#define GPIO_BUTTON 0 // BOOT button
 
-#define GPIO_OUTPUT_MAINLED 4
-#define GPIO_OUTPUT_ALARM 5
+#define GPIO_LOCK 4
+// #define GPIO_OUTPUT_ALARM 5
 
-#define GPIO_INPUT_MOTION 14
+// #define GPIO_INPUT_MOTION 14
 
 // #define GPIO_UART2 16
 // #define GPIO_UART2 17
-
-#define GPIO_INPUT_DOOR 18
-// #define GPIO_DHT11 19
-
+// #define GPIO_IR_RX 18
+// #define GPIO_IR_TX 19
 #define GPIO_I2C_SDA 21
 #define GPIO_I2C_SCL 22
-
-// #define GPIO_INPUT_IR 23
-// #define GPIO_OUTPUT_IR 23
+// #define GPIO_DHT11 23
 
 // #define GPIO_ADC_VOLTAGE_MEASUREMENT 36
 // 15 02
 
-#define GPIO_OUTPUT_NOUSE1 26
-#define GPIO_OUTPUT_NOUSE2 27
+#define GPIO_BUZZER 25
+#define GPIO_DOOR 33 // DOOR sensor
+// x x x x 32 33 25 26 27 14 x 13
+
+// #define GPIO_OUTPUT_NOUSE1 26
+// #define GPIO_OUTPUT_NOUSE2 27
 
 enum switch_onoff_state
 {
