@@ -35,7 +35,9 @@
 // 15 02
 
 #define GPIO_BUZZER 25
-#define GPIO_DOOR 33 // DOOR sensor
+#define GPIO_DOOR 33   // DOOR sensor
+#define GPIO_MOTION 32 // MOTION sensor
+
 // x x x x 32 33 25 26 27 14 x 13
 
 // #define GPIO_OUTPUT_NOUSE1 26
@@ -86,5 +88,7 @@ int get_button_event(int *button_event_type, int *button_event_count);
 
 void led_blink(int switch_state, int delay, int count);
 void change_led_mode(int noti_led_mode);
+
+extern QueueHandle_t gpio_evt_queue;
 
 void iot_gpio_init(void);

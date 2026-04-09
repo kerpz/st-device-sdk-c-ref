@@ -25,6 +25,7 @@
 #include "device_control.h"
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/task.h"
 
 #include "esp_wifi.h"
@@ -75,6 +76,8 @@ static caps_contactSensor_data_t *cap_door_data;
 // static caps_signalStrength_data_t *cap_signalStrength_data;
 
 TaskHandle_t ota_task_handle = NULL;
+
+QueueHandle_t gpio_evt_queue = NULL;
 
 int monitor_enable = true;
 int monitor_period_ms = 60000; // 1 minute
@@ -423,6 +426,56 @@ void button_event(IOT_CAP_HANDLE *handle, int type, int count)
     }
 }
 
+static void gpio_task(void *arg)
+{
+    uint32_t io_num;
+    int pir_last = -1;
+    int door_last = -1;
+
+    for (;;)
+    {
+        if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
+        {
+            int level = gpio_get_level(io_num);
+            printf("GPIO[%" PRIu32 "] intr, val: %d\n", io_num, level);
+
+            // ===== PIR =====
+            if (io_num == GPIO_MOTION)
+            {
+                if (level != pir_last)
+                {
+                    if (level)
+                    {
+                        printf("🚨 PIR: Motion ACTIVE\n");
+                    }
+                    else
+                    {
+                        printf("🚨 PIR: Motion INACTIVE\n");
+                    }
+                    pir_last = level;
+                }
+            }
+
+            // ===== DOOR =====
+            else if (io_num == GPIO_DOOR)
+            {
+                if (level != door_last)
+                {
+                    if (level)
+                    {
+                        printf("🚨 Door OPEN\n");
+                    }
+                    else
+                    {
+                        printf("🚨 Door CLOSED\n");
+                    }
+                    door_last = level;
+                }
+            }
+        }
+    }
+}
+
 static void app_main_task(void *arg)
 {
     IOT_CAP_HANDLE *handle = (IOT_CAP_HANDLE *)arg;
@@ -479,6 +532,9 @@ static void app_main_task(void *arg)
 
             cap_door_data->set_contact_value(cap_door_data, "closed");
             cap_door_data->attr_contact_send(cap_door_data);
+
+            // cap_motion_data->set_motion_value(cap_motion_data, "active");
+            // cap_motion_data->attr_motion_send(cap_motion_data);
 
             // display
             ssd1306_clear();
@@ -545,6 +601,9 @@ void app_main(void)
     int iot_err;
 
     iot_gpio_init();
+
+    // start gpio task
+    xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 10, NULL);
 
     // create a iot context
     iot_ctx = st_conn_init(onboarding_config, onboarding_config_len, device_info, device_info_len);

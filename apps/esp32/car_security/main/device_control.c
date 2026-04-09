@@ -184,24 +184,19 @@ void change_led_mode(int noti_led_mode)
     }
 }
 
-static QueueHandle_t gpio_evt_queue = NULL;
+static void IRAM_ATTR door_isr_handler(void *arg)
+{
+    // uint32_t gpio_num = (uint32_t)arg;
+    // xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+    printf("🚨 Door opened (ISR)!\n");
+}
 
-static void IRAM_ATTR gpio_isr_handler(void *arg)
+static void IRAM_ATTR motion_isr_handler(void *arg)
 {
     uint32_t gpio_num = (uint32_t)arg;
     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
-}
-
-static void gpio_task_example(void *arg)
-{
-    uint32_t io_num;
-    for (;;)
-    {
-        if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
-        {
-            printf("GPIO[%" PRIu32 "] intr, val: %d\n", io_num, gpio_get_level(io_num));
-        }
-    }
+    // cap_motion_data->set_motion_value(cap_motion_data, "active");
+    // cap_motion_data->attr_motion_send(cap_motion_data);
 }
 
 void iot_gpio_init(void)
@@ -234,21 +229,20 @@ void iot_gpio_init(void)
     io_conf.pull_down_en = (BUTTON_GPIO_RELEASED == 0);
     io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
     gpio_config(&io_conf);
-    // gpio_set_intr_type(GPIO_BUTTON, GPIO_INTR_ANYEDGE);
 
-    // io_conf.pin_bit_mask = 1 << GPIO_INPUT_MOTION;
-    // io_conf.pull_down_en = 0;
-    // io_conf.pull_up_en = 1;
-    // gpio_config(&io_conf);
-    // gpio_set_intr_type(GPIO_INPUT_MOTION, GPIO_INTR_ANYEDGE);
+    io_conf.intr_type = GPIO_INTR_ANYEDGE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1 << GPIO_MOTION;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
 
     io_conf.intr_type = GPIO_INTR_NEGEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = 1 << GPIO_DOOR;
-    io_conf.pull_down_en = 1;
-    io_conf.pull_up_en = 0;
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
     gpio_config(&io_conf);
-    // gpio_set_intr_type(GPIO_DOOR, GPIO_INTR_NEGEDGE);
 
     // gpio_pad_select_gpio(GPIO_DOOR);
     // gpio_set_direction(GPIO_DOOR, GPIO_MODE_INPUT);
@@ -258,12 +252,10 @@ void iot_gpio_init(void)
 
     // create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(1, sizeof(uint32_t));
-    // start gpio task
-    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
 
     gpio_install_isr_service(0);
-
-    gpio_isr_handler_add(GPIO_DOOR, gpio_isr_handler, (void *)GPIO_DOOR);
+    gpio_isr_handler_add(GPIO_DOOR, door_isr_handler, (void *)GPIO_DOOR);
+    gpio_isr_handler_add(GPIO_MOTION, motion_isr_handler, (void *)GPIO_MOTION);
 
     gpio_set_level(GPIO_LOCK, 1);
     // gpio_set_level(GPIO_OUTPUT_MAINLED_0, 0);
