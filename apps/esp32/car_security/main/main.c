@@ -77,8 +77,6 @@ static caps_contactSensor_data_t *cap_door_data;
 
 TaskHandle_t ota_task_handle = NULL;
 
-QueueHandle_t gpio_evt_queue = NULL;
-
 int monitor_enable = true;
 int monitor_period_ms = 60000; // 1 minute
 
@@ -426,53 +424,37 @@ void button_event(IOT_CAP_HANDLE *handle, int type, int count)
     }
 }
 
-static void gpio_task(void *arg)
+void sensor_callback(sensor_event_t event)
 {
-    uint32_t io_num;
-    int pir_last = -1;
-    int door_last = -1;
-
-    for (;;)
+    switch (event)
     {
-        if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
-        {
-            int level = gpio_get_level(io_num);
-            printf("GPIO[%" PRIu32 "] intr, val: %d\n", io_num, level);
 
-            // ===== PIR =====
-            if (io_num == GPIO_MOTION)
-            {
-                if (level != pir_last)
-                {
-                    if (level)
-                    {
-                        printf("🚨 PIR: Motion ACTIVE\n");
-                    }
-                    else
-                    {
-                        printf("🚨 PIR: Motion INACTIVE\n");
-                    }
-                    pir_last = level;
-                }
-            }
+    case SENSOR_EVENT_PIR_ACTIVE:
+        // printf("🚨 Motion detected\n");
+        cap_motion_data->set_motion_value(cap_motion_data, "active");
+        cap_motion_data->attr_motion_send(cap_motion_data);
+        break;
 
-            // ===== DOOR =====
-            else if (io_num == GPIO_DOOR)
-            {
-                if (level != door_last)
-                {
-                    if (level)
-                    {
-                        printf("🚨 Door OPEN\n");
-                    }
-                    else
-                    {
-                        printf("🚨 Door CLOSED\n");
-                    }
-                    door_last = level;
-                }
-            }
-        }
+    case SENSOR_EVENT_PIR_INACTIVE:
+        // printf("No motion\n");
+        cap_motion_data->set_motion_value(cap_motion_data, "inactive");
+        cap_motion_data->attr_motion_send(cap_motion_data);
+        break;
+
+    case SENSOR_EVENT_DOOR_OPEN:
+        // printf("🚪 Door OPEN\n");
+        cap_door_data->set_contact_value(cap_door_data, "open");
+        cap_door_data->attr_contact_send(cap_door_data);
+        break;
+
+    case SENSOR_EVENT_DOOR_CLOSE:
+        // printf("🔒 Door CLOSED\n");
+        cap_door_data->set_contact_value(cap_door_data, "closed");
+        cap_door_data->attr_contact_send(cap_door_data);
+        break;
+
+    default:
+        break;
     }
 }
 
@@ -601,9 +583,6 @@ void app_main(void)
     int iot_err;
 
     iot_gpio_init();
-
-    // start gpio task
-    xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 10, NULL);
 
     // create a iot context
     iot_ctx = st_conn_init(onboarding_config, onboarding_config_len, device_info, device_info_len);

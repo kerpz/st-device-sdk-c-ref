@@ -78,6 +78,16 @@ enum button_event_type
     BUTTON_SHORT_PRESS = 1,
 };
 
+// ==== EVENTS ====
+typedef enum
+{
+    SENSOR_EVENT_NONE = 0,
+    SENSOR_EVENT_PIR_ACTIVE,
+    SENSOR_EVENT_PIR_INACTIVE,
+    SENSOR_EVENT_DOOR_OPEN,
+    SENSOR_EVENT_DOOR_CLOSE,
+} sensor_event_t;
+
 void change_lock_state(int lock_state);
 
 // void button_isr_handler(void *arg);
@@ -89,6 +99,6 @@ int get_button_event(int *button_event_type, int *button_event_count);
 void led_blink(int switch_state, int delay, int count);
 void change_led_mode(int noti_led_mode);
 
-extern QueueHandle_t gpio_evt_queue;
+typedef void (*sensor_event_cb_t)(sensor_event_t event);
 
 void iot_gpio_init(void);
