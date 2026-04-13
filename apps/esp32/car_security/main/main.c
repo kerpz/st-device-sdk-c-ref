@@ -430,13 +430,13 @@ void sensor_callback(sensor_event_t event)
     {
 
     case SENSOR_EVENT_PIR_ACTIVE:
-        // printf("🚨 Motion detected\n");
+        printf("🚨 Motion detected\n");
         cap_motion_data->set_motion_value(cap_motion_data, "active");
         cap_motion_data->attr_motion_send(cap_motion_data);
         break;
 
     case SENSOR_EVENT_PIR_INACTIVE:
-        // printf("No motion\n");
+        printf("No motion\n");
         cap_motion_data->set_motion_value(cap_motion_data, "inactive");
         cap_motion_data->attr_motion_send(cap_motion_data);
         break;

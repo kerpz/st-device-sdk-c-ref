@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "ESP-IDF",
+            "compileCommands": [
+                "${workspaceFolder}/apps/esp32/car_security/build/compile_commands.json"
+            ]
+        }
+    ],
+    "version": 4
+}

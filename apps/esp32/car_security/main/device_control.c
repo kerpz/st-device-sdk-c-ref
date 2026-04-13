@@ -206,7 +206,7 @@ static void gpio_task(void *arg)
         if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
         {
             int level = gpio_get_level(io_num);
-            // printf("GPIO[%d] intr, val: %d\n", io_num, level);
+            printf("GPIO[%lu] = %d\n", io_num, level);
 
             // ===== PIR =====
             if (io_num == GPIO_MOTION)
@@ -216,12 +216,18 @@ static void gpio_task(void *arg)
                     if (level)
                     {
                         if (event_cb)
+                        {
+                            printf("Motion detected\n");
                             event_cb(SENSOR_EVENT_PIR_ACTIVE);
+                        }
                     }
                     else
                     {
                         if (event_cb)
+                        {
+                            printf("No motion\n");
                             event_cb(SENSOR_EVENT_PIR_INACTIVE);
+                        }
                     }
                     pir_last = level;
                 }
@@ -256,6 +262,7 @@ void iot_gpio_init(void)
 
     gpio_config_t io_conf;
 
+    memset(&io_conf, 0, sizeof(io_conf));
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
     io_conf.pin_bit_mask = 1ULL << GPIO_LOCK;
@@ -272,6 +279,7 @@ void iot_gpio_init(void)
     // io_conf.pin_bit_mask = 1 << GPIO_OUTPUT_ALARM;
     // gpio_config(&io_conf);
 
+    memset(&io_conf, 0, sizeof(io_conf));
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = 1ULL << GPIO_BUTTON;
@@ -279,13 +287,15 @@ void iot_gpio_init(void)
     io_conf.pull_up_en = (BUTTON_GPIO_RELEASED == 1);
     gpio_config(&io_conf);
 
+    memset(&io_conf, 0, sizeof(io_conf));
     io_conf.intr_type = GPIO_INTR_ANYEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = 1ULL << GPIO_MOTION;
-    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio_config(&io_conf);
 
+    memset(&io_conf, 0, sizeof(io_conf));
     io_conf.intr_type = GPIO_INTR_NEGEDGE;
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pin_bit_mask = 1ULL << GPIO_DOOR;
