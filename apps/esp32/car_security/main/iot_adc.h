@@ -27,6 +27,12 @@
 #define DEFAULT_ADC_TARGET ADC_UNIT_1     // ADC1
 #define DEFAULT_ADC_CHANNEL ADC_CHANNEL_0 // Channel 0
 
+/* 100k / 10k divider: Vext = Vadc * (R1 + R2) / R2 */
+#define ADC_VOLTAGE_DIVIDER_R1_OHM 100000.0f
+#define ADC_VOLTAGE_DIVIDER_R2_OHM 10000.0f
+#define ADC_VOLTAGE_DIVIDER_RATIO \
+  ((ADC_VOLTAGE_DIVIDER_R1_OHM + ADC_VOLTAGE_DIVIDER_R2_OHM) / ADC_VOLTAGE_DIVIDER_R2_OHM)
+
 void adc_setup(void);
 bool get_adc_readings(float *voltage);
 

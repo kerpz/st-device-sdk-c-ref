@@ -64,11 +64,15 @@ bool get_adc_readings(float *voltage)
         return false;
     }
 
-    // convert raw value to voltage
+    // convert raw value to voltage at the ADC input pin
     adc_cali_raw_to_voltage(cali_handle, adc_value, &mv_output);
 
-    *voltage = mv_output / 1000.0f;
-    printf("ADC raw = %d, Voltage = %.3f V\n", adc_value, *voltage);
+    float adc_input_voltage = mv_output / 1000.0f;
+    *voltage = adc_input_voltage * ADC_VOLTAGE_DIVIDER_RATIO;
+    printf("ADC raw = %d, ADC input = %.3f V, External voltage = %.3f V\n",
+           adc_value,
+           adc_input_voltage,
+           *voltage);
 
     return true;
 }
